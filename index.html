@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Diario BL — Tu lista, calendario y foro</title>
+    <!-- Tailwind CSS para diseño móvil premium -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        esmeralda: '#064e3b', // Verde Esmeralda profundo
+                        rosegold: '#b78472',  // Color Rose Gold oficial
+                        rosegoldLight: '#dfc3b8',
+                        rosegoldDark: '#936151'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Iconos limpios e interactivos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Deslizador de notas Rose Gold */
+        input[type="range"]::-webkit-slider-thumb {
+            background: #b78472;
+        }
+        input[type="range"]::-moz-range-thumb {
+            background: #b78472;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen pb-24 text-gray-800">
+
+    <!-- HEADER UNIFICADO CON LOGO "LÍNEAS DE AMOR" -->
+    <header class="bg-esmeralda text-white py-3 px-4 shadow-md sticky top-0 z-50">
+        <div class="flex justify-between items-center max-w-md mx-auto">
+            <div class="flex items-center space-x-2">
+                <!-- El logo en líneas finas Rose Gold -->
+                <svg class="w-9 h-9 text-rosegold" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="50" cy="50" r="40" stroke="#b78472" stroke-dasharray="4 2"/>
+                    <path d="M35 45 C45 35, 55 35, 65 45 C55 55, 45 55, 35 45 Z" />
+                    <path d="M42 55 C50 48, 50 48, 58 55" stroke-linecap="round"/>
+                    <path d="M47 48 L53 48" stroke-linecap="round"/>
+                </svg>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center">
+                        Mi Diario <span class="text-rosegold font-black ml-1">BL</span>
+                    </h1>
+                    <p class="text-[9px] text-rosegoldLight uppercase tracking-widest font-semibold">Comunidad & Bitácora</p>
+                </div>
+            </div>
+            
+            <!-- Botón del Panel de Administrador -->
+            <button onclick="openAdminModal()" class="relative bg-emerald-900/50 hover:bg-emerald-850 p-2 rounded-full border border-rosegold/30 text-rosegoldLight transition">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                <span id="admin-badge" class="absolute -top-1 -right-1 bg-rosegold text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOAST DE NOTIFICACIONES PERSONALIZADO -->
+    <div id="custom-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 z-50 transition-all duration-300 opacity-0 pointer-events-none">
+        <i data-lucide="info" class="w-4 h-4 text-rosegold"></i>
+        <span id="toast-message">Notificación</span>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="max-w-md mx-auto px-4 py-4 space-y-4">
+
+        <!-- PESTAÑA 1: MI DIARIO (PERFIL MEJORADO) -->
+        <section id="view-perfil" class="space-y-4">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-esmeralda to-rosegold"></div>
+                
+                <!-- Carga de Foto de Perfil Interactiva -->
+                <div class="relative w-24 h-24 mx-auto mb-3">
+                    <div onclick="triggerPhotoUpload()" class="w-full h-full bg-gray-100 rounded-full p-1 border border-gray-200 shadow-md cursor-pointer group relative overflow-hidden">
+                        <img id="profile-photo-img" src="" class="w-full h-full object-cover rounded-full hidden" alt="Foto Perfil">
+                        <!-- Estado vacío inicial (Icono en gris) -->
+                        <div id="profile-photo-placeholder" class="w-full h-full rounded-full bg-gray-100 flex flex-col items-center justify-center text-gray-400 hover:text-esmeralda transition">
+                            <i data-lucide="camera" class="w-8 h-8 text-gray-300 group-hover:text-rosegold transition"></i>
+                            <span class="text-[9px] font-bold text-gray-400 mt-1">Cargar Foto</span>
+                        </div>
+                    </div>
+                    <input type="file" id="input-photo-file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
+                </div>
+                
+                <!-- Información Básica de Perfil -->
+                <div class="space-y-1">
+                    <h2 id="user-display-name" class="text-2xl font-black text-esmeralda">Tu Nombre</h2>
+                    <p class="text-[11px] text-gray-400 font-bold uppercase tracking-wide" id="profile-tagline">Nuevo Miembro BL</p>
+                </div>
+
+                <!-- Detalles de Ubicación y Cumpleaños -->
+                <div class="flex flex-col items-center justify-center space-y-2 text-xs text-gray-500 mt-3">
+                    <div class="flex space-x-2">
+                        <span class="flex items-center space-x-1 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                            <span id="profile-flag">📍</span> <span id="profile-pais-name">Selecciona tu país</span>
+                        </span>
+                        <span class="flex items-center space-x-1 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                            <i data-lucide="cake" class="w-3.5 h-3.5 text-rosegold"></i>
+                            <span id="profile-birthday-span">Ingresa tu cumpleaños</span>
+                        </span>
+                    </div>
+                    <button onclick="openEditProfileModal()" class="text-xs text-rosegold hover:text-rosegoldDark font-black flex items-center space-x-1 py-1 transition">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        <span>Editar datos de perfil</span>
+                    </button>
+                </div>
+
+                <!-- RANGO DE ESPECIALISTA BL (GAMIFICACIÓN CORREGIDA) -->
+                <div class="mt-6 bg-gradient-to-br from-esmeralda to-emerald-950 text-white p-4 rounded-2xl border border-rosegold/40 text-left relative overflow-hidden shadow-inner">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] tracking-wider uppercase font-bold text-rosegoldLight">Nivel de Especialista BL</span>
+                            <h3 id="badge-rank-name" class="text-lg font-black text-white flex items-center mt-0.5">
+                                Novata BL 🌱
+                            </h3>
+                        </div>
+                        <span id="badge-rank-tag" class="text-[9px] bg-rosegold/30 text-rosegoldLight border border-rosegold/40 font-black px-2 py-0.5 rounded-lg">Rango Inicial</span>
+                    </div>
+                    
+                    <div class="w-full bg-emerald-950 rounded-full h-2.5 mt-3.5 overflow-hidden border border-emerald-900">
+                        <div id="badge-rank-progress" class="bg-rosegold h-full rounded-full transition-all duration-500" style="width: 10%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span id="count-label" class="text-[10px] text-emerald-300 font-semibold">0 series registradas</span>
+                        <span id="badge-rank-pct" class="text-[10px] text-rosegoldLight font-black">0% para subir</span>
+                    </div>
+                    <p id="badge-rank-next" class="text-[9px] text-gray-300 mt-2 italic border-t border-emerald-900/40 pt-2">Siguiente rango: Aficionada BL (al registrar 11 series)</p>
+                </div>
+
+                <!-- Ver Todos los Rangos -->
+                <div class="mt-3 text-left">
+                    <button onclick="toggleRanksInfo()" class="w-full text-[10px] text-gray-400 hover:text-esmeralda font-bold flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-150 transition">
+                        <span>📋 Ver escala de rangos del sistema</span>
+                        <i data-lucide="chevron-down" id="chevron-ranks" class="w-3.5 h-3.5 transition-transform"></i>
+                    </button>
+                    <div id="ranks-info-box" class="hidden mt-2 p-3 bg-gray-50 rounded-xl border border-gray-150 text-[11px] space-y-1.5 text-gray-600">
+                        <p class="font-bold text-esmeralda pb-1 border-b border-gray-200">Rachas y categorías por series vistas:</p>
+                        <p>🌱 <strong>Novata BL:</strong> 0 a 10 series registradas.</p>
+                        <p>📖 <strong>Aficionada BL:</strong> 11 a 50 series registradas.</p>
+                        <p>🏃‍♀️ <strong>Maratonera BL:</strong> 51 a 150 series registradas.</p>
+                        <p>🎓 <strong>Experta BL:</strong> 151 a 300 series registradas.</p>
+                        <p>🏆 <strong>Maestra BL:</strong> 301 a 500 series registradas.</p>
+                        <p>👑 <strong>Diosa BL:</strong> Más de 500 series registradas.</p>
+                    </div>
+                </div>
+
+                <!-- Año de Inicio de visualización -->
+                <div class="mt-6 pt-5 border-t border-gray-100 flex justify-between items-center text-left">
+                    <div>
+                        <p class="text-xs text-gray-400">Viendo dramas BL desde</p>
+                        <select id="select-inicio-bl" onchange="saveProfileYear(this.value)" class="mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-bold text-esmeralda focus:ring-1 focus:ring-esmeralda">
+                            <!-- Años extendidos desde el 2000 -->
+                            <option value="2000">2000 (Veterana extrema)</option>
+                            <option value="2005">2005</option>
+                            <option value="2010">2010</option>
+                            <option value="2015">2015</option>
+                            <option value="2018">2018</option>
+                            <option value="2020">2020</option>
+                            <option value="2022">2022</option>
+                            <option value="2024">2024</option>
+                            <option value="2026" selected>2026 (Este año)</option>
+                        </select>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400">Total en mi lista</p>
+                        <p id="total-badge-count" class="text-xl font-black text-rosegold">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 2: CALENDARIO FLEXIBLE (GOOGLE CALENDAR STYLE) -->
+        <section id="view-calendario" class="hidden space-y-4">
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
+                
+                <!-- Selectores de Vista -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-black text-esmeralda text-lg">Calendario</h3>
+                        <p class="text-xs text-gray-400">Estrenos oficiales de la semana</p>
+                    </div>
+                    <div class="inline-flex rounded-xl bg-gray-100 p-1 text-xs">
+                        <button onclick="toggleCalendarView('semana')" id="btn-view-semana" class="px-3.5 py-1.5 rounded-lg bg-white text-esmeralda font-bold shadow-sm transition">Semana</button>
+                        <button onclick="toggleCalendarView('mes')" id="btn-view-mes" class="px-3.5 py-1.5 rounded-lg text-gray-500 transition">Mes</button>
+                    </div>
+                </div>
+
+                <!-- VISTA SEMANAL -->
+                <div id="calendar-weekly-strip" class="grid grid-cols-7 gap-1 text-center bg-gray-50 p-1 rounded-2xl border border-gray-150">
+                    <button onclick="selectDay(1)" id="day-1" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">LU</span><span class="font-bold text-sm">29</span></button>
+                    <button onclick="selectDay(2)" id="day-2" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">MA</span><span class="font-bold text-sm">30</span></button>
+                    <button onclick="selectDay(3)" id="day-3" class="py-2.5 rounded-xl text-xs flex flex-col items-center bg-esmeralda text-white font-bold shadow-sm"><span class="text-[9px] text-emerald-200">MI</span><span class="font-bold text-sm">01</span></button>
+                    <button onclick="selectDay(4)" id="day-4" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">JU</span><span class="font-bold text-sm">02</span></button>
+                    <button onclick="selectDay(5)" id="day-5" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">VI</span><span class="font-bold text-sm">03</span></button>
+                    <button onclick="selectDay(6)" id="day-6" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">SA</span><span class="font-bold text-sm">04</span></button>
+                    <button onclick="selectDay(7)" id="day-7" class="py-2.5 rounded-xl text-xs flex flex-col items-center"><span class="text-[9px] text-gray-400">DO</span><span class="font-bold text-sm">05</span></button>
+                </div>
+
+                <!-- VISTA MENSUAL -->
+                <div id="calendar-monthly-grid" class="hidden">
+                    <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-2">Julio 2026</p>
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs">
+                        <span class="text-[9px] text-gray-400 font-bold">L</span>
+                        <span class="text-[9px] text-gray-400 font-bold">M</span>
+                        <span class="text-[9px] text-gray-400 font-bold">M</span>
+                        <span class="text-[9px] text-gray-400 font-bold">J</span>
+                        <span class="text-[9px] text-gray-400 font-bold">V</span>
+                        <span class="text-[9px] text-gray-400 font-bold">S</span>
+                        <span class="text-[9px] text-gray-400 font-bold">D</span>
+                        <button onclick="selectDay(1)" class="p-2 hover:bg-gray-100 rounded-lg">29</button>
+                        <button onclick="selectDay(2)" class="p-2 hover:bg-gray-100 rounded-lg">30</button>
+                        <button onclick="selectDay(3)" class="p-2 bg-esmeralda text-white font-bold rounded-lg">1</button>
+                        <button onclick="selectDay(4)" class="p-2 hover:bg-gray-100 rounded-lg">2</button>
+                        <button onclick="selectDay(5)" class="p-2 hover:bg-gray-100 rounded-lg">3</button>
+                        <button onclick="selectDay(6)" class="p-2 hover:bg-gray-100 rounded-lg">4</button>
+                        <button onclick="selectDay(7)" class="p-2 hover:bg-gray-100 rounded-lg">5</button>
+                    </div>
+                </div>
+
+                <!-- Tarjetas Detalladas del Día Seleccionado -->
+                <div class="space-y-3 pt-2" id="calendar-events-container">
+                    <!-- Se poblará vía JavaScript -->
+                </div>
+            </div>
+
+            <!-- Botón Crowdsourcing -->
+            <button onclick="openCrowdModal()" class="w-full bg-white border-2 border-dashed border-rosegold text-rosegold p-4 rounded-2xl flex items-center justify-center space-x-2 font-bold hover:bg-orange-50/20 transition-all shadow-sm">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>¿Falta alguna serie? Sugiérela aquí</span>
+            </button>
+        </section>
+
+        <!-- PESTAÑA 3: MI LISTA (BITÁCORA) -->
+        <section id="view-lista" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-black text-esmeralda">Mi Bitácora</h3>
+                    <p class="text-xs text-gray-400">Tu historial de visualización personal</p>
+                </div>
+                <button onclick="openManualModal()" class="bg-rosegold hover:bg-rosegoldDark text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-sm flex items-center space-x-1.5 transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Añadir Serie</span>
+                </button>
+            </div>
+
+            <!-- Lista de Series Registradas -->
+            <div id="my-series-list" class="space-y-3">
+                <!-- Se poblará mediante JS de manera persistente -->
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4: COMUNIDAD (FOROS & CHATS) -->
+        <section id="view-comunidad" class="hidden space-y-4">
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
+                <div>
+                    <h3 class="font-black text-esmeralda text-lg">Foros de Discusión</h3>
+                    <p class="text-xs text-gray-400">Comenta los capítulos semanales en tiempo real</p>
+                </div>
+
+                <!-- Lista de Salas de Foros -->
+                <div class="space-y-3">
+                    <div onclick="openChatRoom('global', 'Charla Libre')" class="p-4 border border-gray-100 rounded-2xl flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
+                        <div>
+                            <h4 class="font-bold text-gray-800 flex items-center">
+                                <span class="mr-2">💬</span> Sala General
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1">Comparte con otras fans sin límite de temas.</p>
+                        </div>
+                        <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-black uppercase">Abierto</span>
+                    </div>
+
+                    <div onclick="openChatRoom('payback', 'Payback (Capítulos Semanales)')" class="p-4 border border-gray-150 rounded-2xl flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
+                        <div>
+                            <h4 class="font-bold text-gray-700 flex items-center">
+                                <span class="mr-2">🔥</span> Payback — Discusión Semanal
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1">Sala activa de discusión semanal.</p>
+                        </div>
+                        <span class="text-[9px] bg-rosegold text-white px-2.5 py-1 rounded-lg font-black uppercase shadow-sm">Activo</span>
+                    </div>
+
+                    <div onclick="openChatRoom('deepin', 'Deep In')" class="p-4 border border-gray-150 rounded-2xl flex justify-between items-center hover:bg-gray-50 cursor-pointer transition opacity-80">
+                        <div>
+                            <h4 class="font-bold text-gray-700 flex items-center">
+                                <span class="mr-2">📺</span> Deep In — Discusión Semanal
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1">Comentarios sobre los últimos estrenos oficiales.</p>
+                        </div>
+                        <span class="text-[9px] bg-gray-100 text-gray-500 px-2 py-1 rounded-lg font-bold uppercase">Abierto</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FORMULARIO MODAL: EDITAR PERFIL COMPLETO (Sustituye prompts molestos) -->
+    <div id="modal-edit-profile" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div>
+                    <h3 class="font-black text-esmeralda text-lg">Editar Datos Personales</h3>
+                    <p class="text-[10px] text-gray-400">Configura tu perfil de usuario de la app</p>
+                </div>
+                <button onclick="closeEditProfileModal()" class="text-gray-400 hover:text-gray-600 bg-gray-50 p-1.5 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            
+            <form id="form-edit-profile" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Nombre de Usuario / Nickname</label>
+                    <input type="text" id="edit-user-name" required class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-esmeralda" placeholder="Ej: Eli">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">País de Residencia</label>
+                    <select id="edit-user-country" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-esmeralda">
+                        <!-- Toda Latinoamérica y América -->
+                        <option value="🇨🇱 Chile">🇨🇱 Chile</option>
+                        <option value="🇦🇷 Argentina">🇦🇷 Argentina</option>
+                        <option value="🇧🇴 Bolivia">🇧🇴 Bolivia</option>
+                        <option value="🇧🇷 Brasil">🇧🇷 Brasil</option>
+                        <option value="🇨🇴 Colombia">🇨🇴 Colombia</option>
+                        <option value="🇨🇷 Costa Rica">🇨🇷 Costa Rica</option>
+                        <option value="🇨🇺 Cuba">🇨🇺 Cuba</option>
+                        <option value="🇪🇨 Ecuador">🇪🇨 Ecuador</option>
+                        <option value="🇸🇻 El Salvador">🇸🇻 El Salvador</option>
+                        <option value="🇺🇸 Estados Unidos">🇺🇸 Estados Unidos</option>
+                        <option value="🇬🇹 Guatemala">🇬🇹 Guatemala</option>
+                        <option value="🇭🇳 Honduras">🇭🇳 Honduras</option>
+                        <option value="🇲🇽 México">🇲🇽 México</option>
+                        <option value="🇳🇮 Nicaragua">🇳🇮 Nicaragua</option>
+                        <option value="🇵🇦 Panamá">🇵🇦 Panamá</option>
+                        <option value="🇵🇾 Paraguay">🇵🇾 Paraguay</option>
+                        <option value="🇵🇪 Perú">🇵🇪 Perú</option>
+                        <option value="🇵🇷 Puerto Rico">🇵🇷 Puerto Rico</option>
+                        <option value="🇩🇴 Rep. Dominicana">🇩🇴 Rep. Dominicana</option>
+                        <option value="🇺🇾 Uruguay">🇺🇾 Uruguay</option>
+                        <option value="🇻🇪 Venezuela">🇻🇪 Venezuela</option>
+                        <option value="🇨🇦 Canadá">🇨🇦 Canadá</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Fecha de Cumpleaños</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- Selector de Día -->
+                        <select id="edit-bday-day" class="border border-gray-200 rounded-xl p-2.5 bg-gray-50 text-xs focus:ring-1 focus:ring-esmeralda"></select>
+                        <!-- Selector de Mes -->
+                        <select id="edit-bday-month" class="border border-gray-200 rounded-xl p-2.5 bg-gray-50 text-xs focus:ring-1 focus:ring-esmeralda">
+                            <option value="Enero">Enero</option>
+                            <option value="Febrero">Febrero</option>
+                            <option value="Marzo">Marzo</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Mayo">Mayo</option>
+                            <option value="Junio">Junio</option>
+                            <option value="Julio">Julio</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Septiembre">Septiembre</option>
+                            <option value="Octubre">Octubre</option>
+                            <option value="Noviembre">Noviembre</option>
+                            <option value="Diciembre">Diciembre</option>
+                        </select>
+                        <!-- Selector de Año -->
+                        <select id="edit-bday-year" class="border border-gray-200 rounded-xl p-2.5 bg-gray-50 text-xs focus:ring-1 focus:ring-esmeralda">
+                            <option value="">Ocultar Año</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeEditProfileModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="w-1/2 bg-esmeralda hover:bg-emerald-900 text-white font-bold py-3 rounded-2xl shadow-md transition">
+                        Guardar Perfil
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO (CERO ALERTS DEL NAVEGADOR) -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="trash-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-gray-800 text-lg">¿Estás segura?</h3>
+                <p id="confirm-modal-text" class="text-xs text-gray-500 mt-1">Esta serie se eliminará permanentemente de tu bitácora.</p>
+            </div>
+            <div class="flex space-x-2 pt-1">
+                <button onclick="closeConfirmModal(false)" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition text-xs">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-delete" class="w-1/2 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl transition text-xs">
+                    Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO MODAL: CROWDSOURCING -->
+    <div id="modal-crowd" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div>
+                    <h3 class="font-black text-esmeralda text-lg">Sugerir al Calendario</h3>
+                    <p class="text-[10px] text-gray-400">Pasará por la aprobación de los administradores</p>
+                </div>
+                <button onclick="closeCrowdModal()" class="text-gray-400 hover:text-gray-600 bg-gray-50 p-1.5 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-crowd" class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Título de la Serie</label>
+                    <input type="text" id="crowd-titulo" required class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-esmeralda" placeholder="Ej: Deep In">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">País</label>
+                        <select id="crowd-pais" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                            <option value="🇹🇭 Tailandia">🇹🇭 Tailandia</option>
+                            <option value="🇹🇼 Taiwán">🇹🇼 Taiwán</option>
+                            <option value="🇰🇷 Corea del Sur">🇰🇷 Corea del Sur</option>
+                            <option value="🇯🇵 Japón">🇯🇵 Japón</option>
+                            <option value="🇨🇳 China">🇨🇳 China</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Día de Estreno</label>
+                        <select id="crowd-dia" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                            <option value="1">Lunes</option>
+                            <option value="2">Martes</option>
+                            <option value="3" selected>Miércoles</option>
+                            <option value="4">Jueves</option>
+                            <option value="5">Viernes</option>
+                            <option value="6">Sábado</option>
+                            <option value="7">Domingo</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Plataformas de Emisión</label>
+                    <input type="text" id="crowd-plataformas" required class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-esmeralda" placeholder="Ej: Viki, GagaOOLala, YouTube">
+                </div>
+                <button type="submit" class="w-full bg-esmeralda text-white py-3.5 rounded-2xl font-bold tracking-wide shadow-md hover:bg-emerald-900 transition mt-2">
+                    Enviar Sugerencia
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FORMULARIO MODAL: AÑADIR MANUALMENTE (BITÁCORA) -->
+    <div id="modal-manual" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div>
+                    <h3 class="font-black text-esmeralda text-lg">Añadir Serie a Mi Lista</h3>
+                    <p class="text-[10px] text-gray-400">Guarda tu historial de visualización</p>
+                </div>
+                <button onclick="closeManualModal()" class="text-gray-400 hover:text-gray-600 bg-gray-50 p-1.5 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-manual" class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Título de la Serie</label>
+                    <input type="text" id="manual-titulo" required class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-esmeralda" placeholder="Ej: Bad Buddy">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">País</label>
+                        <select id="manual-pais" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                            <option value="Tailandia">🇹🇭 Tailandia</option>
+                            <option value="Taiwán">🇹🇼 Taiwán</option>
+                            <option value="Corea del Sur">🇰🇷 Corea del Sur</option>
+                            <option value="Japón">🇯🇵 Japón</option>
+                            <option value="China">🇨🇳 China</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Plataforma donde la ves</label>
+                        <select id="manual-plataforma" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                            <option value="Viki">Viki</option>
+                            <option value="GagaOOLala">GagaOOLala</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="Netflix">Netflix</option>
+                            <option value="Crunchyroll">Crunchyroll</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Año Emisión Oficial</label>
+                        <input type="number" id="manual-anno-emision" value="2026" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Año en que la viste</label>
+                        <input type="number" id="manual-anno-visto" value="2026" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Mi Nota Personal (Del 1 al 10)</label>
+                    <div class="flex items-center space-x-3 bg-gray-50 p-3 border border-gray-200 rounded-xl">
+                        <input type="range" id="manual-nota" min="1" max="10" value="8" oninput="updateNotaLabel(this.value)" class="w-full accent-rosegold cursor-pointer">
+                        <span id="label-nota" class="font-black text-rosegold text-lg w-8 text-center">8</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Comentario / Reseña</label>
+                    <textarea id="manual-comentarios" class="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 h-20 focus:outline-none" placeholder="¿Qué te pareció?"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-esmeralda text-white py-3.5 rounded-2xl font-bold tracking-wide shadow-md hover:bg-emerald-900 transition mt-2">
+                    Guardar en Mi Diario
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CHAT -->
+    <div id="modal-chat" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md h-[550px] flex flex-col shadow-2xl overflow-hidden">
+            <div class="bg-esmeralda p-4 flex justify-between items-center text-white">
+                <div>
+                    <h3 id="chat-title" class="font-black text-white text-base">Sala de Chat</h3>
+                    <p class="text-[10px] text-rosegoldLight">Comentarios de la Comunidad</p>
+                </div>
+                <button onclick="closeChatRoom()" class="text-white hover:text-rosegold bg-emerald-900/50 p-1.5 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
+                <!-- Mensajes -->
+            </div>
+
+            <form id="form-chat" class="p-3 bg-white border-t border-gray-150 flex items-center space-x-2">
+                <input type="text" id="chat-input-text" required placeholder="Escribe tu opinión..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none">
+                <button type="submit" class="bg-rosegold text-white p-3 rounded-xl hover:bg-rosegoldDark transition">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PANEL DE CONTROL DE ADMINISTRADOR -->
+    <div id="modal-admin" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div>
+                    <h3 class="font-black text-esmeralda text-lg">Panel de Aprobación</h3>
+                    <p class="text-[10px] text-gray-400">Verifica y publica estrenos de la comunidad</p>
+                </div>
+                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-gray-600 bg-gray-50 p-1.5 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Series Pendientes de Aprobación</p>
+                <div id="admin-pending-container" class="space-y-3 max-h-60 overflow-y-auto">
+                    <!-- Fila Pendiente -->
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Administradores del Sistema</p>
+                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 bg-esmeralda text-white rounded-full flex items-center justify-center text-[10px] font-bold">A</div>
+                        <span class="text-xs font-bold text-gray-700" id="admin-profile-name">Administrador</span>
+                    </div>
+                    <span class="text-[10px] bg-rosegold/20 text-rosegoldDark px-2 py-0.5 rounded-full font-black uppercase">Súper Admin</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVEGACIÓN INFERIOR (VERDE ESMERALDA) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-esmeralda text-white border-t border-emerald-900 shadow-xl z-40">
+        <div class="max-w-md mx-auto grid grid-cols-4 text-center text-[10px] py-2">
+            <button onclick="navigate('perfil')" id="nav-perfil" class="flex flex-col items-center text-rosegold font-bold">
+                <i data-lucide="user" class="w-5 h-5 mb-0.5 transition-transform duration-200 scale-110"></i><span>Mi Perfil</span>
+            </button>
+            <button onclick="navigate('calendario')" id="nav-calendario" class="flex flex-col items-center text-emerald-300 hover:text-white">
+                <i data-lucide="calendar" class="w-5 h-5 mb-0.5 transition-transform"></i><span>Calendario</span>
+            </button>
+            <button onclick="navigate('lista')" id="nav-lista" class="flex flex-col items-center text-emerald-300 hover:text-white">
+                <i data-lucide="book-heart" class="w-5 h-5 mb-0.5 transition-transform"></i><span>Mi Lista</span>
+            </button>
+            <button onclick="navigate('comunidad')" id="nav-comunidad" class="flex flex-col items-center text-emerald-300 hover:text-white">
+                <i data-lucide="users" class="w-5 h-5 mb-0.5 transition-transform"></i><span>Comunidad</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MOTOR DE FUNCIONAMIENTO INTERACTIVO -->
+    <script>
+        // BASE DE DATOS INICIAL CON DATOS NEUTRALES
+        let state = {
+            username: "Tu Nombre",
+            pais: "Chile",
+            bandera: "🇨🇱",
+            cumpleanos_dia: "25",
+            cumpleanos_mes: "Abril",
+            cumpleanos_ano: "2000",
+            profile_photo: "", // Base64 de la imagen cargada
+            inicioBL: "2026",
+            calendarView: "semana",
+            selectedDay: 3, 
+            mySeries: [], // Empieza completamente vacía para que el usuario ingrese sus datos
+            calendarData: [
+                { id: 101, titulo: "Deep In", pais: "🇹🇭 Tailandia", dia: 3, plataformas: ["Viki", "GagaOOLala", "YouTube"], aprobada: true },
+                { id: 102, titulo: "Payback", pais: "🇹🇭 Tailandia", dia: 3, plataformas: ["Viki", "YouTube"], aprobada: true },
+                { id: 103, titulo: "Cherry Magic (Corea)", pais: "🇰🇷 Corea del Sur", dia: 5, plataformas: ["Viki"], aprobada: true }
+            ],
+            pendingApproval: [
+                { id: 201, titulo: "Unknown Sequel", pais: "🇹🇼 Taiwán", dia: 3, plataformas: ["GagaOOLala", "YouTube"] }
+            ],
+            chats: {
+                global: [
+                    { user: "Sofi", msg: "Hola! ¿Quién más se está viendo los estrenos de esta semana?", time: "Hace 1 hora" }
+                ],
+                payback: [
+                    { user: "Marta", msg: "¡Amo a los protagonistas!", time: "Hace 2 horas" }
+                ],
+                deepin: [
+                    { user: "Moderadora", msg: "Bienvenidos al foro semanal de Deep In.", time: "Ayer" }
+                ]
+            },
+            currentChatRoom: 'global'
+        };
+
+        // Guardado persistente
+        function loadSavedState() {
+            const saved = localStorage.getItem('mi_diario_bl_v2_state');
+            if (saved) {
+                state = JSON.parse(saved);
+            }
+            renderAll();
+        }
+
+        function saveState() {
+            localStorage.setItem('mi_diario_bl_v2_state', JSON.stringify(state));
+        }
+
+        // MOSTRAR MENSAJES TOAST (Notificaciones elegantes en app)
+        function showToast(msg) {
+            const toast = document.getElementById('custom-toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // CARGA DE FOTO DE PERFIL
+        function triggerPhotoUpload() {
+            document.getElementById('input-photo-file').click();
+        }
+
+        function handlePhotoUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.profile_photo = e.target.result;
+                    saveState();
+                    renderAll();
+                    showToast("¡Foto de perfil actualizada!");
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // NAVEGACIÓN
+        function navigate(target) {
+            const tabs = ['perfil', 'calendario', 'lista', 'comunidad'];
+            tabs.forEach(tab => {
+                document.getElementById(`view-${tab}`).classList.add('hidden');
+                document.getElementById(`nav-${tab}`).classList.remove('text-rosegold', 'font-black');
+                document.getElementById(`nav-${tab}`).classList.add('text-emerald-300');
+            });
+            document.getElementById(`view-${target}`).classList.remove('hidden');
+            document.getElementById(`nav-${target}`).classList.add('text-rosegold', 'font-black');
+            document.getElementById(`nav-${target}`).classList.remove('text-emerald-300');
+            lucide.createIcons();
+        }
+
+        // MODAL DE EDICIÓN DE PERFIL
+        function openEditProfileModal() {
+            document.getElementById('edit-user-name').value = state.username;
+            document.getElementById('edit-user-country').value = `${state.bandera} ${state.pais}`;
+            document.getElementById('edit-bday-day').value = state.cumpleanos_dia;
+            document.getElementById('edit-bday-month').value = state.cumpleanos_mes;
+            document.getElementById('edit-bday-year').value = state.cumpleanos_ano;
+            
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+            document.getElementById('modal-edit-profile').classList.add('flex');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('modal-edit-profile').classList.add('hidden');
+            document.getElementById('modal-edit-profile').classList.remove('flex');
+        }
+
+        // Llenar selectores del cumpleaños en la edición
+        function populateBirthdaySelectors() {
+            const daySel = document.getElementById('edit-bday-day');
+            const yearSel = document.getElementById('edit-bday-year');
+            
+            daySel.innerHTML = '';
+            for (let i = 1; i <= 31; i++) {
+                const op = document.createElement('option');
+                op.value = i;
+                op.innerText = i;
+                daySel.appendChild(op);
+            }
+            
+            // Años de 1900 a 2026
+            yearSel.innerHTML = '<option value="">Ocultar Año</option>';
+            for (let i = 2026; i >= 1900; i--) {
+                const op = document.createElement('option');
+                op.value = i;
+                op.innerText = i;
+                yearSel.appendChild(op);
+            }
+        }
+
+        document.getElementById('form-edit-profile').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('edit-user-name').value;
+            const countryCombined = document.getElementById('edit-user-country').value;
+            
+            // Separar la bandera del nombre del país
+            const flag = countryCombined.substring(0, 2);
+            const countryName = countryCombined.substring(3);
+            
+            state.username = usernameInput;
+            state.bandera = flag;
+            state.pais = countryName;
+            state.cumpleanos_dia = document.getElementById('edit-bday-day').value;
+            state.cumpleanos_mes = document.getElementById('edit-bday-month').value;
+            state.cumpleanos_ano = document.getElementById('edit-bday-year').value;
+            
+            saveState();
+            renderAll();
+            closeEditProfileModal();
+            showToast("¡Perfil guardado correctamente!");
+        });
+
+        // ESCALA DE RANGOS DINÁMICA (Especialista BL)
+        function getDynamicRank(seriesCount) {
+            if (seriesCount <= 10) {
+                const max = 10;
+                const pct = Math.floor((seriesCount / max) * 100);
+                return {
+                    name: "Novata BL 🌱",
+                    tag: "Rango Inicial",
+                    pct: pct,
+                    next: `Siguiente rango: Aficionada BL (registrar ${11 - seriesCount} series más)`
+                };
+            } else if (seriesCount <= 50) {
+                const min = 11;
+                const max = 50;
+                const pct = Math.floor(((seriesCount - min) / (max - min)) * 100);
+                return {
+                    name: "Aficionada BL 📖",
+                    tag: "Lector Intermedio",
+                    pct: pct,
+                    next: `Siguiente rango: Maratonera BL (registrar ${51 - seriesCount} series más)`
+                };
+            } else if (seriesCount <= 150) {
+                const min = 51;
+                const max = 150;
+                const pct = Math.floor(((seriesCount - min) / (max - min)) * 100);
+                return {
+                    name: "Maratonera BL 🏃‍♀️",
+                    tag: "Fan Consagrada",
+                    pct: pct,
+                    next: `Siguiente rango: Experta BL (registrar ${151 - seriesCount} series más)`
+                };
+            } else if (seriesCount <= 300) {
+                const min = 151;
+                const max = 300;
+                const pct = Math.floor(((seriesCount - min) / (max - min)) * 100);
+                return {
+                    name: "Experta BL 🎓",
+                    tag: "Crítica Veterana",
+                    pct: pct,
+                    next: `Siguiente rango: Maestra BL (registrar ${301 - seriesCount} series más)`
+                };
+            } else if (seriesCount <= 50) {
+                const min = 301;
+                const max = 500;
+                const pct = Math.floor(((seriesCount - min) / (max - min)) * 100);
+                return {
+                    name: "Maestra BL 🏆",
+                    tag: "Leyenda BL",
+                    pct: pct,
+                    next: `Siguiente rango: DIOSA BL (registrar ${501 - seriesCount} series más)`
+                };
+            } else {
+                return {
+                    name: "Diosa BL 👑",
+                    tag: "Diosa Omnisciente",
+                    pct: 100,
+                    next: "¡Has alcanzado el rango máximo del olimpo BL!"
+                };
+            }
+        }
+
+        function toggleRanksInfo() {
+            const box = document.getElementById('ranks-info-box');
+            const chev = document.getElementById('chevron-ranks');
+            if (box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+                chev.style.transform = 'rotate(180deg)';
+            } else {
+                box.classList.add('hidden');
+                chev.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // CALENDARIO LOGIC
+        function toggleCalendarView(view) {
+            state.calendarView = view;
+            const btnSemana = document.getElementById('btn-view-semana');
+            const btnMes = document.getElementById('btn-view-mes');
+            const weekStrip = document.getElementById('calendar-weekly-strip');
+            const monthGrid = document.getElementById('calendar-monthly-grid');
+
+            if (view === 'semana') {
+                btnSemana.classList.add('bg-white', 'text-esmeralda', 'font-bold', 'shadow-sm');
+                btnMes.classList.remove('bg-white', 'text-esmeralda', 'font-bold', 'shadow-sm');
+                weekStrip.classList.remove('hidden');
+                monthGrid.classList.add('hidden');
+            } else {
+                btnMes.classList.add('bg-white', 'text-esmeralda', 'font-bold', 'shadow-sm');
+                btnSemana.classList.remove('bg-white', 'text-esmeralda', 'font-bold', 'shadow-sm');
+                weekStrip.classList.add('hidden');
+                monthGrid.classList.remove('hidden');
+            }
+            saveState();
+        }
+
+        function selectDay(dayNumber) {
+            state.selectedDay = dayNumber;
+            for (let i = 1; i <= 7; i++) {
+                const el = document.getElementById(`day-${i}`);
+                if (i === dayNumber) {
+                    el.className = "py-2.5 rounded-xl text-xs flex flex-col items-center bg-esmeralda text-white font-bold shadow-sm";
+                    el.children[0].className = "text-[9px] text-emerald-200";
+                } else {
+                    el.className = "py-2.5 rounded-xl text-xs flex flex-col items-center hover:bg-gray-100";
+                    el.children[0].className = "text-[9px] text-gray-400";
+                }
+            }
+            renderCalendarDay();
+            saveState();
+        }
+
+        function renderCalendarDay() {
+            const container = document.getElementById('calendar-events-container');
+            container.innerHTML = '';
+            
+            const dSeries = state.calendarData.filter(s => s.dia === state.selectedDay && s.aprobada);
+            
+            if (dSeries.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                        <p class="text-xs text-gray-400 font-bold">No hay estrenos agendados para este día</p>
+                    </div>
+                `;
+                return;
+            }
+
+            dSeries.forEach(serie => {
+                const yaAgregada = state.mySeries.some(my => my.titulo.toLowerCase() === serie.titulo.toLowerCase());
+                const card = document.createElement('div');
+                if (yaAgregada) {
+                    card.className = "border-2 border-rosegold bg-orange-50/20 p-4 rounded-2xl flex justify-between items-center shadow-sm";
+                    card.innerHTML = `
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-black text-esmeralda text-sm">${serie.titulo}</h4>
+                                <span class="bg-rosegold/10 text-rosegoldDark text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">Viendo</span>
+                            </div>
+                            <p class="text-xs text-gray-500">📺 En emisión: ${serie.plataformas.join(', ')}</p>
+                            <p class="text-[10px] text-rosegold font-bold">✓ Ya está en tu diario personal</p>
+                        </div>
+                        <span class="text-rosegold"><i data-lucide="check-circle" class="w-5 h-5 fill-rosegold/20"></i></span>
+                    `;
+                } else {
+                    card.className = "border border-gray-150 bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm";
+                    card.innerHTML = `
+                        <div class="space-y-1">
+                            <h4 class="font-black text-gray-800 text-sm">${serie.titulo}</h4>
+                            <p class="text-xs text-gray-500">📺 Plataformas: ${serie.plataformas.join(', ')}</p>
+                            <p class="text-[10px] text-gray-400">País: ${serie.pais}</p>
+                        </div>
+                        <button onclick="addFromCalendar('${serie.titulo}', '${serie.pais.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '').trim()}')" class="bg-esmeralda hover:bg-emerald-900 text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center space-x-1 shadow-sm transition">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> <span>Agregar</span>
+                        </button>
+                    `;
+                }
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function addFromCalendar(titulo, pais) {
+            const nueva = {
+                id: Date.now(),
+                titulo: titulo,
+                pais: pais,
+                plataforma: "Viki", 
+                annoEmision: 2026,
+                annoVisto: 2026,
+                nota: 10,
+                comentarios: "Agregada directo desde el calendario de lanzamientos.",
+                agregadaDesdeCalendario: true
+            };
+            state.mySeries.push(nueva);
+            saveState();
+            renderAll();
+            showToast(`¡"${titulo}" agregada a tu lista!`);
+            navigate('lista');
+        }
+
+        // CROWDSOURCING SUGGESTIONS
+        function openCrowdModal() {
+            document.getElementById('modal-crowd').classList.remove('hidden');
+            document.getElementById('modal-crowd').classList.add('flex');
+        }
+        function closeCrowdModal() {
+            document.getElementById('modal-crowd').classList.add('hidden');
+            document.getElementById('modal-crowd').classList.remove('flex');
+        }
+
+        document.getElementById('form-crowd').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const titulo = document.getElementById('crowd-titulo').value;
+            const pais = document.getElementById('crowd-pais').value;
+            const dia = parseInt(document.getElementById('crowd-dia').value);
+            const plataformas = document.getElementById('crowd-plataformas').value.split(',').map(p => p.trim());
+
+            const propuesta = {
+                id: Date.now(),
+                titulo: titulo,
+                pais: pais,
+                dia: dia,
+                plataformas: plataformas
+            };
+
+            state.pendingApproval.push(propuesta);
+            saveState();
+            renderAll();
+            closeCrowdModal();
+            this.reset();
+            showToast("Sugerencia enviada a revisión.");
+        });
+
+        // BITÁCORA MANUAL
+        function openManualModal() {
+            document.getElementById('modal-manual').classList.remove('hidden');
+            document.getElementById('modal-manual').classList.add('flex');
+        }
+        function closeManualModal() {
+            document.getElementById('modal-manual').classList.add('hidden');
+            document.getElementById('modal-manual').classList.remove('flex');
+        }
+        function updateNotaLabel(val) {
+            document.getElementById('label-nota').innerText = val;
+        }
+
+        document.getElementById('form-manual').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nueva = {
+                id: Date.now(),
+                titulo: document.getElementById('manual-titulo').value,
+                pais: document.getElementById('manual-pais').value,
+                plataforma: document.getElementById('manual-plataforma').value,
+                annoEmision: parseInt(document.getElementById('manual-anno-emision').value),
+                annoVisto: parseInt(document.getElementById('manual-anno-visto').value),
+                nota: parseInt(document.getElementById('manual-nota').value),
+                comentarios: document.getElementById('manual-comentarios').value,
+                agregadaDesdeCalendario: false
+            };
+
+            state.mySeries.push(nueva);
+            saveState();
+            renderAll();
+            closeManualModal();
+            this.reset();
+            updateNotaLabel(8);
+            showToast("¡Serie guardada en tu bitácora!");
+            navigate('lista');
+        });
+
+        function renderMySeries() {
+            const container = document.getElementById('my-series-list');
+            container.innerHTML = '';
+
+            if (state.mySeries.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                        <i data-lucide="book-open" class="w-12 h-12 mx-auto text-gray-300 mb-2"></i>
+                        <p class="text-sm font-bold text-gray-400">Aún no registras ninguna serie</p>
+                        <p class="text-xs text-gray-400 mt-1.5">Tu bitácora personal está limpia. Agrega una serie usando el botón "Añadir Serie" o desde el calendario de estrenos.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            state.mySeries.forEach(serie => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-gray-100 rounded-3xl p-4 shadow-sm flex space-x-3.5 relative overflow-hidden";
+                card.innerHTML = `
+                    <div class="w-16 h-20 bg-gradient-to-tr from-emerald-50 to-orange-50 border border-gray-100 rounded-2xl flex flex-col items-center justify-center text-rosegold flex-shrink-0 shadow-inner">
+                        <i data-lucide="heart" class="w-6 h-6 text-rosegold fill-rosegold/10"></i>
+                        <span class="text-[10px] font-black uppercase text-esmeralda mt-1">${serie.plataforma}</span>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-black text-gray-800 text-sm leading-tight pr-6">${serie.titulo}</h4>
+                            <span class="text-xs bg-rosegold/10 text-rosegoldDark font-black px-2 py-0.5 rounded-lg flex items-center absolute top-4 right-4">
+                                <i data-lucide="star" class="w-3 h-3 fill-rosegold mr-1"></i> ${serie.nota}
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">${serie.pais} • Emisión: ${serie.annoEmision} • Visto: ${serie.annoVisto}</p>
+                        <p class="text-xs text-gray-600 bg-gray-50/50 p-2 rounded-xl italic mt-2 border border-gray-100">"${serie.comentarios}"</p>
+                        <div class="flex justify-end space-x-2 pt-1">
+                            <button onclick="confirmDeleteSeries(${serie.id})" class="text-[10px] text-red-500 font-bold hover:underline">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // CONFIRMACIÓN DE ELIMINACIÓN CON MODAL PROPIO
+        let seriesToDeleteId = null;
+        function confirmDeleteSeries(id) {
+            seriesToDeleteId = id;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+            document.getElementById('modal-confirm').classList.add('flex');
+        }
+
+        function closeConfirmModal(shouldDelete) {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            document.getElementById('modal-confirm').classList.remove('flex');
+            seriesToDeleteId = null;
+        }
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', function() {
+            if (seriesToDeleteId) {
+                state.mySeries = state.mySeries.filter(s => s.id !== seriesToDeleteId);
+                saveState();
+                renderAll();
+                showToast("Serie eliminada de tu lista.");
+                closeConfirmModal(false);
+            }
+        });
+
+        // CHAT ROOMS LOGIC
+        function openChatRoom(roomKey, roomTitle) {
+            state.currentChatRoom = roomKey;
+            document.getElementById('chat-title').innerText = roomTitle;
+            renderChatMessages();
+            document.getElementById('modal-chat').classList.remove('hidden');
+            document.getElementById('modal-chat').classList.add('flex');
+            saveState();
+        }
+
+        function closeChatRoom() {
+            document.getElementById('modal-chat').classList.add('hidden');
+            document.getElementById('modal-chat').classList.remove('flex');
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML = '';
+            const msgs = state.chats[state.currentChatRoom] || [];
+
+            msgs.forEach(m => {
+                const isMe = m.user.toLowerCase() === state.username.toLowerCase();
+                const bubble = document.createElement('div');
+                bubble.className = isMe ? "flex flex-col items-end" : "flex flex-col items-start";
+                
+                bubble.innerHTML = `
+                    <span class="text-[10px] text-gray-400 font-bold px-1 mb-0.5">${m.user} • ${m.time}</span>
+                    <div class="p-3 rounded-2xl max-w-[85%] text-xs shadow-sm ${
+                        isMe ? 'bg-esmeralda text-white rounded-tr-none' : 'bg-white border border-gray-150 text-gray-800 rounded-tl-none'
+                    }">
+                        ${m.msg}
+                    </div>
+                `;
+                container.appendChild(bubble);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('form-chat').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input-text');
+            const newMsg = {
+                user: state.username,
+                msg: input.value,
+                time: "Ahora mismo"
+            };
+
+            state.chats[state.currentChatRoom].push(newMsg);
+            saveState();
+            renderChatMessages();
+            input.value = '';
+        });
+
+        // ADMIN BOARD ACTIONS
+        function openAdminModal() {
+            document.getElementById('modal-admin').classList.remove('hidden');
+            document.getElementById('modal-admin').classList.add('flex');
+            renderAdminPending();
+        }
+        function closeAdminModal() {
+            document.getElementById('modal-admin').classList.add('hidden');
+            document.getElementById('modal-admin').classList.remove('flex');
+        }
+
+        function renderAdminPending() {
+            const container = document.getElementById('admin-pending-container');
+            container.innerHTML = '';
+            const countBadge = document.getElementById('admin-badge');
+
+            if (state.pendingApproval.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">No hay solicitudes pendientes.</p>`;
+                countBadge.classList.add('hidden');
+                return;
+            } else {
+                countBadge.classList.remove('hidden');
+                countBadge.innerText = state.pendingApproval.length;
+            }
+
+            state.pendingApproval.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-50 p-3 rounded-xl border border-gray-200 flex justify-between items-center";
+                card.innerHTML = `
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-xs text-gray-800">${item.titulo}</h4>
+                        <p class="text-[10px] text-gray-500">${item.pais} • Plataformas: ${item.plataformas.join(', ')}</p>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="approveSeries(${item.id})" class="bg-esmeralda text-white px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm">Aprobar</button>
+                        <button onclick="rejectSeries(${item.id})" class="bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase">Rechazar</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function approveSeries(id) {
+            const itemIndex = state.pendingApproval.findIndex(s => s.id === id);
+            if (itemIndex > -1) {
+                const approved = state.pendingApproval[itemIndex];
+                approved.aprobada = true;
+                
+                state.calendarData.push(approved);
+                state.pendingApproval.splice(itemIndex, 1);
+                
+                saveState();
+                renderAll();
+                renderAdminPending();
+                showToast(`¡"${approved.titulo}" aprobada y publicada!`);
+            }
+        }
+
+        function rejectSeries(id) {
+            const itemIndex = state.pendingApproval.findIndex(s => s.id === id);
+            if (itemIndex > -1) {
+                state.pendingApproval.splice(itemIndex, 1);
+                saveState();
+                renderAll();
+                renderAdminPending();
+                showToast("Sugerencia rechazada.");
+            }
+        }
+
+        // RENDER GENERAL DEL APP STATE
+        function renderAll() {
+            // Perfil
+            document.getElementById('user-display-name').innerText = state.username;
+            document.getElementById('admin-profile-name').innerText = `${state.username} (Tú - Creadora)`;
+            document.getElementById('profile-pais-name').innerText = state.pais;
+            document.getElementById('profile-flag').innerText = state.bandera;
+            
+            // Render de Cumpleaños
+            const bdayStr = (state.cumpleanos_dia && state.cumpleanos_mes) ? 
+                `${state.cumpleanos_dia} de ${state.cumpleanos_mes}${state.cumpleanos_ano ? ` (${state.cumpleanos_ano})` : ''}` : 
+                "Ingresa tu cumpleaños";
+            document.getElementById('profile-birthday-span').innerText = bdayStr;
+            
+            document.getElementById('select-inicio-bl').value = state.inicioBL;
+            
+            // Imagen de Perfil
+            const imgEl = document.getElementById('profile-photo-img');
+            const placeholderEl = document.getElementById('profile-photo-placeholder');
+            if (state.profile_photo) {
+                imgEl.src = state.profile_photo;
+                imgEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+
+            // Gamificación y Contadores Reales
+            const seriesCount = state.mySeries.length;
+            document.getElementById('total-badge-count').innerText = seriesCount;
+            document.getElementById('count-label').innerText = `${seriesCount} series registradas`;
+
+            const rank = getDynamicRank(seriesCount);
+            document.getElementById('badge-rank-name').innerHTML = `
+                <i data-lucide="crown" class="w-5 h-5 text-rosegold mr-1.5 ${seriesCount > 500 ? 'animate-bounce' : 'opacity-60'}"></i>
+                ${rank.name}
+            `;
+            document.getElementById('badge-rank-tag').innerText = rank.tag;
+            document.getElementById('badge-rank-progress').style.width = `${rank.pct}%`;
+            document.getElementById('badge-rank-pct').innerText = `${rank.pct}% para subir`;
+            document.getElementById('badge-rank-next').innerText = rank.next;
+
+            // Determinar subtítulos/frase en el perfil según rango
+            let tagline = "Especialista BL Novata 🌱";
+            if (seriesCount > 10) tagline = "Especialista BL Aficionada 📖";
+            if (seriesCount > 50) tagline = "Maratonera BL Consagrada 🏃‍♀️";
+            if (seriesCount > 150) tagline = "Crítica Veterana BL 🎓";
+            if (seriesCount > 300) tagline = "Leyenda Activa BL 🏆";
+            if (seriesCount > 500) tagline = "Diosa Suprema BL 👑";
+            document.getElementById('profile-tagline').innerText = tagline;
+
+            // Renderizar vistas hijas
+            renderCalendarDay();
+            renderMySeries();
+            renderAdminPending();
+            lucide.createIcons();
+        }
+
+        // INICIACIÓN AL CARGAR LA PÁGINA
+        window.onload = function() {
+            populateBirthdaySelectors();
+            loadSavedState();
+        };
+    </script>
+</body>
+</html>
+
